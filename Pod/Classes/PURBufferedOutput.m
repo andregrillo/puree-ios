@@ -136,6 +136,11 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 
 - (void)emitLog:(PURLog *)log
 {
+    //When new logger is emitted, restart the timer if it is invalid
+    if(![self.timer isValid]){
+        [self setUpTimer];
+    }
+    
     [self.buffer addObject:log];
     [self.logStore addLog:log forOutput:self completion:^{
         if ([self.buffer count] >= self.logLimit) {
@@ -149,6 +154,7 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
     self.recentFlushTime = CFAbsoluteTimeGetCurrent();
 
     if ([self.buffer count] == 0) {
+        [self.timer invalidate];
         return;
     }
 
@@ -175,16 +181,9 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
                   [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidSuccessWriteChunkNotification object:self];
                   return;
               }
-
-              chunk.retryCount++;
-              if (chunk.retryCount <= self.maxRetryCount) {
-                  int64_t delay = 2.0 * pow(2, chunk.retryCount - 1);
-                  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                      [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidRetryWriteChunkNotification object:self];
-
-                      [self callWriteChunk:chunk];
-                  });
-              }
+              
+              // In case of fail, add chunk to the buffer again
+              [self.buffer addObjectsFromArray:chunk.logs];
           }];
 }
 

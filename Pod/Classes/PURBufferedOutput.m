@@ -182,8 +182,18 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
                   return;
               }
               
-              // In case of fail, add chunk to the buffer again
-              [self.buffer addObjectsFromArray:chunk.logs];
+              chunk.retryCount++;
+              if (chunk.retryCount <= self.maxRetryCount) {
+                  int64_t delay = 2.0 * pow(2, chunk.retryCount - 1);
+                  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                      [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidRetryWriteChunkNotification object:self];
+                      
+                      [self callWriteChunk:chunk];
+                  });
+              }else {
+                  // In case of fail, add chunk to the buffer again
+                  [self.buffer addObjectsFromArray:chunk.logs];
+              }
           }];
 }
 

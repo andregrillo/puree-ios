@@ -27,6 +27,7 @@ extern NSString * const PURBufferedOutputDidRetryWriteChunkNotification;
 
 - (void)writeChunk:(PURBufferedOutputChunk *)chunk completion:(void (^)(BOOL success))completion NS_SWIFT_NAME(write(chunk:completion:));
 - (void)tick;
+- (void) truncateBufferedLogs;
 
 @property (nonatomic) NSMutableArray<PURLog *> *buffer;
 @property (nonatomic, readonly) NSUInteger logLimit;

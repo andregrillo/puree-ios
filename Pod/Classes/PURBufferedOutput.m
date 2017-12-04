@@ -32,7 +32,6 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 
 @interface PURBufferedOutput ()
 
-@property (nonatomic) NSMutableArray<PURLog *> *buffer;
 @property (nonatomic) NSUInteger logLimit;
 @property (nonatomic) NSTimeInterval flushInterval;
 @property (nonatomic) NSUInteger maxRetryCount;
@@ -89,6 +88,7 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
             return;
         }
         [self.buffer addObjectsFromArray:logs];
+        [self truncateBufferedLogs];
         [self flush];
     }];
 
@@ -200,6 +200,10 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 - (void)writeChunk:(PURBufferedOutputChunk *)chunk completion:(void (^)(BOOL))completion
 {
     completion(YES);
+}
+
+- (void) truncateBufferedLogs {
+
 }
 
 @end

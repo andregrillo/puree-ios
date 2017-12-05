@@ -1,5 +1,5 @@
 source 'https://github.com/CocoaPods/Specs'
 
 target 'PureeTests' do
-  pod "Puree", :path => "../"
+  pod "PureeOS", :path => "../"
 end

@@ -135,12 +135,7 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 }
 
 - (void)emitLog:(PURLog *)log
-{
-    //When new logger is emitted, restart the timer if it is invalid
-    if(![self.timer isValid]){
-        [self setUpTimer];
-    }
-    
+{    
     [self.buffer addObject:log];
     [self.logStore addLog:log forOutput:self completion:^{
         if ([self.buffer count] >= self.logLimit) {
@@ -154,7 +149,6 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
     self.recentFlushTime = CFAbsoluteTimeGetCurrent();
 
     if ([self.buffer count] == 0) {
-        [self.timer invalidate];
         return;
     }
 

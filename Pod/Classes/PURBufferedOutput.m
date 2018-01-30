@@ -179,7 +179,7 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 
               if (success) {
                   [self.logStore removeLogs:chunk.logs forOutput:self completion:^{
-                      
+                      [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidSuccessWriteChunkNotification object:self];
                       //Ensure that we setUp the timer on the main thread
                       dispatch_async(dispatch_get_main_queue(), ^{
                           if([self.buffer count] > 0 && ![self.timer isValid]){
@@ -187,7 +187,6 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
                           }
                       });
                   }];
-                  [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidSuccessWriteChunkNotification object:self];
                   return;
               }
               

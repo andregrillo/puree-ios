@@ -95,7 +95,7 @@ class PURLoggerStandardPluginTest: XCTestCase {
         // stay in buffer
         logger.post(["aaa": "6"], tag: "buffered.a")
 
-        waitForExpectations(timeout: 1.0, handler: nil)
+        waitForExpectations(timeout: 2.0, handler: nil)
 
         let logStorageContent = String(describing: testLogStorage)
         XCTAssertTrue(logStorageContent.contains("[unbuffered|zzz:###]"))
@@ -182,11 +182,11 @@ class PURLoggerStandardPluginTest: XCTestCase {
         logger.post(["aaa": "4"], tag: "failure")
         logger.post(["aaa": "5"], tag: "failure")
 
-        waitForExpectations(timeout: 1.0, handler: nil)
+        waitForExpectations(timeout: 10.0, handler: nil)
         XCTAssertEqual(String(describing: testLogStorage), "[error]")
 
         expectation(forNotification: Notification.Name.PURBufferedOutputDidTryWriteChunk.rawValue, object: nil, handler: nil)
-        // scheduled after 2sec
+        // scheduled after 4sec
         waitForExpectations(timeout: 3.0, handler: nil)
         XCTAssertEqual(String(describing: testLogStorage), "[error][error]")
 

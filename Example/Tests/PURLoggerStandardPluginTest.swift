@@ -95,7 +95,7 @@ class PURLoggerStandardPluginTest: XCTestCase {
         // stay in buffer
         logger.post(["aaa": "6"], tag: "buffered.a")
 
-        waitForExpectations(timeout: 2.0, handler: nil)
+        waitForExpectations(timeout: 5.0, handler: nil)
 
         let logStorageContent = String(describing: testLogStorage)
         XCTAssertTrue(logStorageContent.contains("[unbuffered|zzz:###]"))

@@ -142,7 +142,6 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
     [self.buffer addObject:log];
     [self.logStore addLog:log forOutput:self completion:^{
         if ([self.buffer count] >= self.logLimit) {
-            [self.timer invalidate];
             [self setUpTimer];
         }
     }];
@@ -180,9 +179,13 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 
               if (success) {
                   [self.logStore removeLogs:chunk.logs forOutput:self completion:^{
-                      if([self.buffer count] > 0 && ![self.timer isValid]){
-                          [self setUpTimer];
-                      }
+                      
+                      //Ensure that we setUp the timer on the main thread
+                      dispatch_async(dispatch_get_main_queue(), ^{
+                          if([self.buffer count] > 0 && ![self.timer isValid]){
+                              [self setUpTimer];
+                          }
+                      });
                   }];
                   [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidSuccessWriteChunkNotification object:self];
                   return;
@@ -200,9 +203,12 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
                   // In case of fail, add chunk to the buffer again
                   [self.buffer addObjectsFromArray:chunk.logs];
                   
-                  if([self.buffer count] > 0 && ![self.timer isValid]){
-                      [self setUpTimer];
-                  }
+                  //Ensure that we setUp the timer on the main thread
+                  dispatch_async(dispatch_get_main_queue(), ^{
+                      if([self.buffer count] > 0 && ![self.timer isValid]){
+                          [self setUpTimer];
+                      }
+                  });
               }
           }];
 }

@@ -50,11 +50,16 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 - (void)setUpTimer
 {
     [self.timer invalidate];
-    self.timer = [NSTimer timerWithTimeInterval:1.0
-                                         target:self
-                                       selector:@selector(tick)
-                                       userInfo:nil
-                                        repeats:YES];
+    if(self.flushInterval <= 0){
+        self.flushInterval = 1.0;
+    }
+    
+    self.timer = [NSTimer timerWithTimeInterval:self.flushInterval
+                                             target:self
+                                           selector:@selector(tick)
+                                           userInfo:nil
+                                            repeats:NO];
+    [self.timer setTolerance:1.0];
     [[NSRunLoop currentRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
 }
 
@@ -116,15 +121,13 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 - (void)suspend
 {
     [self.timer invalidate];
-
+    
     [super suspend];
 }
 
 - (void)tick
 {
-    if ((CFAbsoluteTimeGetCurrent() - self.recentFlushTime) > self.flushInterval) {
-        [self flush];
-    }
+    [self flush];
 }
 
 - (void)retrieveLogs:(PURLogStoreRetrieveCompletionBlock)completion
@@ -135,13 +138,18 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
 }
 
 - (void)emitLog:(PURLog *)log
-{    
+{
     [self.buffer addObject:log];
     [self.logStore addLog:log forOutput:self completion:^{
         if ([self.buffer count] >= self.logLimit) {
-            [self flush];
+            [self setUpTimer];
         }
     }];
+    
+    //When new logger is emitted, setup the timer if it is invalid
+    if(![self.timer isValid]){
+        [self setUpTimer];
+    }
 }
 
 - (void)flush
@@ -170,9 +178,15 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
               [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidTryWriteChunkNotification object:self];
 
               if (success) {
-                  [self.logStore removeLogs:chunk.logs forOutput:self completion:nil];
-
-                  [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidSuccessWriteChunkNotification object:self];
+                  [self.logStore removeLogs:chunk.logs forOutput:self completion:^{
+                      [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidSuccessWriteChunkNotification object:self];
+                      //Ensure that we setUp the timer on the main thread
+                      dispatch_async(dispatch_get_main_queue(), ^{
+                          if([self.buffer count] > 0 && ![self.timer isValid]){
+                              [self setUpTimer];
+                          }
+                      });
+                  }];
                   return;
               }
               
@@ -187,6 +201,13 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
               }else {
                   // In case of fail, add chunk to the buffer again
                   [self.buffer addObjectsFromArray:chunk.logs];
+                  
+                  //Ensure that we setUp the timer on the main thread
+                  dispatch_async(dispatch_get_main_queue(), ^{
+                      if([self.buffer count] > 0 && ![self.timer isValid]){
+                          [self setUpTimer];
+                      }
+                  });
               }
           }];
 }

@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "PureeOS"
-  s.version          = "2.0.1.OS4"
+  s.version          = "2.0.1.OS5"
   s.summary          = "A log collector for iOS."
   s.homepage         = "https://github.com/OutSystems/puree-ios"
   s.license          = "MIT"

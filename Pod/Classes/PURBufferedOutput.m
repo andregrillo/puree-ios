@@ -47,20 +47,31 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
     [self.timer invalidate];
 }
 
+- (void)setUpTimerIfNeeded {
+    @synchronized (self.timer) {
+        if(![self.timer isValid]) {
+            [self setUpTimer];
+        }
+    }
+}
+
 - (void)setUpTimer
 {
-    [self.timer invalidate];
-    if(self.flushInterval <= 0){
-        self.flushInterval = 1.0;
-    }
+    @synchronized (self) {
     
-    self.timer = [NSTimer timerWithTimeInterval:self.flushInterval
-                                             target:self
-                                           selector:@selector(tick)
-                                           userInfo:nil
-                                            repeats:NO];
-    [self.timer setTolerance:1.0];
-    [[NSRunLoop currentRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
+        if(self.flushInterval <= 0){
+            self.flushInterval = 1.0;
+        }
+        
+        self.timer = [NSTimer timerWithTimeInterval:self.flushInterval
+                                                 target:self
+                                               selector:@selector(tick)
+                                               userInfo:nil
+                                                repeats:NO];
+        [self.timer setTolerance:1.0];
+        [[NSRunLoop currentRunLoop] addTimer:self.timer forMode:NSRunLoopCommonModes];
+        
+    }
 }
 
 - (void)configure:(NSDictionary<NSString *, id> *)settings
@@ -97,7 +108,7 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
         [self flush];
     }];
 
-    [self setUpTimer];
+    [self setUpTimerIfNeeded];
 }
 
 - (void)resume
@@ -115,7 +126,7 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
         [self flush];
     }];
 
-    [self setUpTimer];
+    [self setUpTimerIfNeeded];
 }
 
 - (void)suspend
@@ -142,14 +153,12 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
     [self.buffer addObject:log];
     [self.logStore addLog:log forOutput:self completion:^{
         if ([self.buffer count] >= self.logLimit) {
-            [self setUpTimer];
+            [self setUpTimerIfNeeded];
         }
     }];
     
     //When new logger is emitted, setup the timer if it is invalid
-    if(![self.timer isValid]){
-        [self setUpTimer];
-    }
+    [self setUpTimerIfNeeded];
 }
 
 - (void)flush
@@ -182,8 +191,8 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
                       [[NSNotificationCenter defaultCenter] postNotificationName:PURBufferedOutputDidSuccessWriteChunkNotification object:self];
                       //Ensure that we setUp the timer on the main thread
                       dispatch_async(dispatch_get_main_queue(), ^{
-                          if([self.buffer count] > 0 && ![self.timer isValid]){
-                              [self setUpTimer];
+                          if ([self.buffer count] > 0) {
+                              [self setUpTimerIfNeeded];
                           }
                       });
                   }];
@@ -204,8 +213,8 @@ NSUInteger PURBufferedOutputDefaultMaxRetryCount = 3;
                   
                   //Ensure that we setUp the timer on the main thread
                   dispatch_async(dispatch_get_main_queue(), ^{
-                      if([self.buffer count] > 0 && ![self.timer isValid]){
-                          [self setUpTimer];
+                      if ([self.buffer count] > 0) {
+                          [self setUpTimerIfNeeded];
                       }
                   });
               }

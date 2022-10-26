@@ -74,7 +74,7 @@ static NSString *PURLogKey(PUROutput *output, PURLog *log)
 
     YapDatabase *database = __databases[self.databasePath];
     if (!database) {
-        database = [[YapDatabase alloc] initWithURL:[NSURL fileURLWithPath: self.databasePath]];
+        database = [[YapDatabase alloc] initWithPath: self.databasePath];
         __databases[self.databasePath] = database;
     }
     if (self.databaseConnection.database != database) {

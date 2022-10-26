@@ -5,12 +5,12 @@ Pod::Spec.new do |s|
   s.homepage         = "https://github.com/OutSystems/puree-ios"
   s.license          = "MIT"
   s.author           = { "Tomohiro Moro" => "tomohiro-moro@cookpad.com" }
-  s.source           = { :git => "https://github.com/OutSystems/puree-ios.git", :branch => "outsystems", :tag => s.version.to_s }
+  s.source           = { :git => "https://github.com/andregrillo/puree-ios.git", :branch => "2.0.1.OS6.1", :tag => s.version.to_s }
 
   s.platform     = :ios, '7.0'
   s.requires_arc = true
 
   s.source_files = 'Pod/Classes'
 
-  s.dependency 'YapDatabase', '~> 3.1.4'
+  s.dependency 'YapDatabase', '~> 4.0'
 end

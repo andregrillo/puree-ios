@@ -12,5 +12,5 @@ Pod::Spec.new do |s|
 
   s.source_files = 'Pod/Classes'
 
-  s.dependency 'YapDatabase', '~> 4.0'
+  s.dependency 'YapDatabase', '~> 3.1.4'
 end
